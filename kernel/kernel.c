@@ -1,6 +1,8 @@
 #include <stdint.h>
 #include <stddef.h>
 #include "../include/string.h"
+#include "../include/kprintf.h"
+#include <stdarg.h>
 
 #define VGA_ADDRESS    0xB8000
 #define VGA_WIDTH      80
@@ -51,34 +53,124 @@ void kprint(const char *str) {
         kputchar(*str++);
 }
 
+static void print_number(unsigned int num, int base, int is_signed, int is_uppercase) {
+    if (num == 0) {
+        kputchar('0');
+        return;
+    }
+
+    int is_negative = 0;
+    if (is_signed) {
+        int signed_num = (int)num;
+        if (signed_num < 0) {
+            is_negative = 1;
+            num = (unsigned int)(-signed_num);
+        }
+    }
+
+    char buffer[32];
+    int i = 0;
+
+    while (num > 0) {
+        int remainder = num % base;
+        if (remainder < 10) {
+            buffer[i] = remainder + '0';
+        } else {
+            buffer[i] = remainder - 10 + (is_uppercase ? 'A' : 'a');
+        }
+        i++;
+        num = num / base;
+    }
+
+    if (is_negative) {
+        buffer[i] = '-';
+        i++;
+    }
+
+    while (i > 0) {
+        i--;
+        kputchar(buffer[i]);
+    }
+}
+
+void kprintf(const char *fmt, ...) {
+    va_list arguments;
+    va_start(arguments, fmt);
+
+    while (*fmt != '\0') {
+        if (*fmt == '%') {
+            fmt++;
+            switch (*fmt) {
+                case 'd':
+                case 'i': {
+                    int num = va_arg(arguments, int);
+                    print_number((unsigned int)num, 10, 1, 0);
+                    break;
+                }
+                case 'u': {
+                    unsigned int num = va_arg(arguments, unsigned int);
+                    print_number(num, 10, 0, 0);
+                    break;
+                }
+                case 'o': {
+                    unsigned int num = va_arg(arguments, unsigned int);
+                    print_number(num, 8, 0, 0);
+                    break;
+                }
+                case 'x': {
+                    unsigned int num = va_arg(arguments, unsigned int);
+                    print_number(num, 16, 0, 0);
+                    break;
+                }
+                case 'X': {
+                    unsigned int num = va_arg(arguments, unsigned int);
+                    print_number(num, 16, 0, 1);
+                    break;
+                }
+                case 'p': {
+                    unsigned int num = va_arg(arguments, unsigned int);
+                    kprint("0x");
+                    print_number(num, 16, 0, 0);
+                    break;
+                }
+                case 's': {
+                    char *str = va_arg(arguments, char *);
+                    kprint(str);
+                    break;
+                }
+                case 'c': {
+                    char c = (char)va_arg(arguments, int);
+                    kputchar(c);
+                    break;
+                }
+                case '%': {
+                    kputchar('%');
+                    break;
+                }
+                default: {
+                    kputchar('%');
+                    if (*fmt != '\0') {
+                        kputchar(*fmt);
+                    } else {
+                        fmt--;
+                    }
+                    break;
+                }
+            }
+        } else {
+            kputchar(*fmt);
+        }
+        fmt++;
+    }
+
+    va_end(arguments);
+}
 void kernel_main(void) {
     clear_screen();
-        kprint("Line 1\n");
-        kprint("Line 2\n");
-        kprint("Line 3\n");
-        kprint("Line 4\n");
-        kprint("Line 5\n");
-        kprint("Line 6\n");
-        kprint("Line 7\n");
-        kprint("Line 8\n");
-        kprint("Line 9\n");
-        kprint("Line 10\n");
-        kprint("Line 11\n");
-        kprint("Line 12\n");
-        kprint("Line 13\n");
-        kprint("Line 14\n");
-        kprint("Line 15\n");
-        kprint("Line 16\n");
-        kprint("Line 17\n");
-        kprint("Line 18\n");
-        kprint("Line 19\n");
-        kprint("Line 20\n");
-        kprint("Line 21\n");
-        kprint("Line 22\n");
-        kprint("Line 23\n");
-        kprint("Line 24\n");
-        kprint("Line 25\n");
-        kprint("Line 26 - should scroll!\n");
-        kprint("Line 27\n");
-        kprint("Line 28\n");
-    }
+    kprintf("Hello %s\n", "Viko");
+    kprintf("Number: %d\n", 42);
+    kprintf("Negative: %d\n", -7);
+    kprintf("Hex: 0x%x\n", 255);
+    kprintf("Char: %c\n", 'A');
+    kprintf("Percent: 100%%\n");
+}
