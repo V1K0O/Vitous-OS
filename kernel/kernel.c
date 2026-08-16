@@ -2,6 +2,8 @@
 #include <stddef.h>
 #include "../include/string.h"
 #include "../include/kprintf.h"
+#include "../include/gdt.h"
+#include "../include/idt.h"
 #include <stdarg.h>
 
 #define VGA_ADDRESS    0xB8000
@@ -165,12 +167,17 @@ void kprintf(const char *fmt, ...) {
 
     va_end(arguments);
 }
+
+
+
 void kernel_main(void) {
+    gdt_init();
+    idt_init();
     clear_screen();
-    kprintf("Hello %s\n", "Viko");
-    kprintf("Number: %d\n", 42);
-    kprintf("Negative: %d\n", -7);
-    kprintf("Hex: 0x%x\n", 255);
-    kprintf("Char: %c\n", 'A');
-    kprintf("Percent: 100%%\n");
+    kprintf("Before exception\n");
+    
+    // ud2 — guaranteed invalid opcode, always fires exception 6
+    __asm__ volatile ("ud2");
+    
+    kprintf("After exception - should never print\n");
 }

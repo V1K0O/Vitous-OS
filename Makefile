@@ -5,7 +5,7 @@ LD = i686-elf-gcc
 CFLAGS  = -std=gnu99 -ffreestanding -O2 -Wall -Wextra -Iinclude
 LDFLAGS = -ffreestanding -O2 -nostdlib -lgcc
 
-OBJECTS = boot/boot.o kernel/kernel.o kernel/string.o
+OBJECTS = boot/boot.o boot/gdt_asm.o boot/idt_asm.o kernel/kernel.o kernel/string.o kernel/gdt.o kernel/idt.o kernel/isr.o
 
 all: myos.iso
 
@@ -25,6 +25,22 @@ myos.iso: myos.bin
 	cp myos.bin iso/boot/
 	grub-mkrescue -o myos.iso iso
 
+boot/gdt_asm.o: boot/gdt_asm.asm
+	$(AS) -f elf32 $< -o $@
+
+kernel/gdt.o: kernel/gdt.c
+	$(CC) $(CFLAGS) -c $< -o $@
+	
+boot/idt_asm.o: boot/idt_asm.asm
+	$(AS) -f elf32 $< -o $@
+
+kernel/idt.o: kernel/idt.c
+	$(CC) $(CFLAGS) -c $< -o $@
+
+kernel/isr.o: kernel/isr.c
+	$(CC) $(CFLAGS) -c $< -o $@
+
+	
 run: myos.iso
 	qemu-system-i386 -cdrom myos.iso
 
