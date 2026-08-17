@@ -1,6 +1,7 @@
 #include <stdint.h>
 #include "../include/kprintf.h"
 #include "../include/io.h"
+#include "../include/keyboard.h"
 
 struct registers {
     uint32_t gs, fs, es, ds;
@@ -51,6 +52,9 @@ void isr_handler(struct registers *regs) {
 void irq_handler(struct registers *regs) {
     if (regs->int_no >= 40) {
         outb(0xA0, 0x20);
+    }
+    if (regs->int_no == 33) {
+        keyboard_handler();
     }
     outb(0x20, 0x20);
 }

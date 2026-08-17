@@ -5,7 +5,7 @@ LD = i686-elf-gcc
 CFLAGS  = -std=gnu99 -ffreestanding -O2 -Wall -Wextra -Iinclude
 LDFLAGS = -ffreestanding -O2 -nostdlib -lgcc
 
-OBJECTS = boot/boot.o boot/gdt_asm.o boot/idt_asm.o kernel/kernel.o kernel/string.o kernel/gdt.o kernel/idt.o kernel/isr.o
+OBJECTS = boot/boot.o boot/gdt_asm.o boot/idt_asm.o kernel/kernel.o kernel/string.o kernel/gdt.o kernel/idt.o kernel/isr.o kernel/keyboard.o
 
 all: myos.iso
 
@@ -38,6 +38,9 @@ kernel/idt.o: kernel/idt.c
 	$(CC) $(CFLAGS) -c $< -o $@
 
 kernel/isr.o: kernel/isr.c
+	$(CC) $(CFLAGS) -c $< -o $@
+
+kernel/keyboard.o: kernel/keyboard.c
 	$(CC) $(CFLAGS) -c $< -o $@
 
 	

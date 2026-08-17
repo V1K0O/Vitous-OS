@@ -174,10 +174,7 @@ void kernel_main(void) {
     gdt_init();
     idt_init();
     clear_screen();
-    kprintf("Before exception\n");
-    
-    // ud2 — guaranteed invalid opcode, always fires exception 6
-    __asm__ volatile ("ud2");
-    
-    kprintf("After exception - should never print\n");
+    kprintf("Vitous OS v0.1\n");
+    kprintf("Keyboard ready  start typing!\n");
+    while(1) {}
 }
