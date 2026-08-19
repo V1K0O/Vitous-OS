@@ -1,10 +1,12 @@
 #include <stdint.h>
 #include <stddef.h>
+#include <stdarg.h>
 #include "../include/string.h"
 #include "../include/kprintf.h"
 #include "../include/gdt.h"
 #include "../include/idt.h"
-#include <stdarg.h>
+#include "../include/io.h"
+
 
 #define VGA_ADDRESS    0xB8000
 #define VGA_WIDTH      80
@@ -35,19 +37,53 @@ static void scroll(void) {
     vga_row = VGA_HEIGHT - 1;
 }
 
+void update_cursor(void) {
+    uint16_t pos = vga_row * VGA_WIDTH + vga_col;
+    outb(0x3D4, 0x0F);
+    outb(0x3D5, (uint8_t)(pos & 0xFF));
+    outb(0x3D4, 0x0E);
+    outb(0x3D5, (uint8_t)((pos >> 8) & 0xFF));
+}
+
 void kputchar(char c) {
     if (c == '\n') {
         vga_col = 0;
         vga_row++;
-    } else {
+    }
+    else if(c=='\b')
+    {
+    	if (vga_col > 0) {
+    	            vga_col--;
+    	        } else if (vga_row > 0) {
+    	            vga_row--;
+    	            vga_col = VGA_WIDTH - 1;
+    	        }
+    	        
+    	        vga[vga_row * VGA_WIDTH + vga_col] = make_entry(' ', WHITE_ON_BLACK);
+    }
+
+    else if(c =='\t')
+    {
+    	vga_col = (vga_col + 4) & ~3;
+    	    if (vga_col >= VGA_WIDTH) {
+    	        vga_col = 0;
+    	        vga_row++;
+    	    }
+    }
+    
+    else
+     {
         vga[vga_row * VGA_WIDTH + vga_col] = make_entry(c, WHITE_ON_BLACK);
-        if (++vga_col >= VGA_WIDTH) {
+        if (++vga_col >= VGA_WIDTH) 
+        {
             vga_col = 0;
             vga_row++;
         }
     }
     if (vga_row >= VGA_HEIGHT)
         scroll();
+
+    update_cursor();
 }
 
 void kprint(const char *str) {
